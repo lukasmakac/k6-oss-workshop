@@ -107,6 +107,7 @@ export default function () {
     headers: {
       "Content-Type": "application/json",
       "X-User-ID": 23423,
+      "Authorization": "token abcdef0123456789"
     },
   });
   console.log(`${res.json().pizza.name} (${res.json().pizza.ingredients.length} ingredients)`);
@@ -956,7 +957,7 @@ You can also use it to interact with and test your web apps, as with Playwright/
 To do that, let's create a new script named `browser.js` with the following content:
 
 ```js
-import { browser } from "k6/experimental/browser";
+import { browser } from "k6/browser";
 import { check } from "k6";
 
 const BASE_URL = __ENV.BASE_URL || "http://localhost:3333";
@@ -975,25 +976,21 @@ export const options = {
 };
 
 export default async function () {
-  const page = browser.newPage();
+  const page = await browser.newPage();
 
-  try {
-    await page.goto(BASE_URL);
-    check(page, {
-      header:
-        page.locator("h1").textContent() ==
+  await page.goto(BASE_URL);
+  check(page, {
+    header: (await page.locator("h1").textContent()) ==
         "Looking to break out of your pizza routine?",
-    });
+  });
 
-    await page.locator('//button[. = "Pizza, Please!"]').click();
-    page.waitForTimeout(500);
-    page.screenshot({ path: "screenshot.png" });
-    check(page, {
-      recommendation: page.locator("div#recommendations").textContent() != "",
-    });
-  } finally {
-    page.close();
-  }
+  await page.locator('//button[. = "Pizza, Please!"]').click();
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: "screenshot.png" });
+  check(page, {
+    recommendation: (await page.locator("div#recommendations").textContent()) != "",
+  });
+
 }
 ```
 
